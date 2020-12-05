@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage="$(basename "$0") [-h] [--help] [--gt size] [--lt size] [root] [string] -- search for string in filename or content
+
+DESCRIPTION:
+    -h		Show this help message
+    --help	Same as -h
+    --gt	Search for any file with size greater than the specified number
+    -gt		Same as --gt
+    --lt	Search for any file with size lower than the specified number
+    -lt		Same as -lt
+
+PRIMARIES:
+    root	Directory root for search
+    string	The search term
+"
+usage() {
+    echo "$usage"
+    exit 1
+}
+
+GT=
+LT=
+
+for option in "$@"
+do
+    case $option in
+        -h|--help) usage;;
+        -gt=*|--gt=*) GT=$(dehumanise "${option#*=}"); shift;;
+        -gt|--gt) GT=$(dehumanise $2); shift; shift;;
+        -lt=*|--lt=*) LT=$(dehumanise "${option#*=}"); shift;;
+        -lt|--lt) LT=$(dehumanise $2); shift; shift;;
+        -*|--*|\?) printf "illegal option: %s\n\n" "$option" >&2; usage;;
+    esac
+done
+
+if [ $# -eq 2 ]; then
+    root="$1"
+    string="$2"
+elif [ $# -eq 1 ]; then
+    root="$1"
+    string=""
+else
+    root=.
+    string=""
+fi
+
+##
+
+BASE="find -L ${root} -type f"
+
+if [[ ! -z $GT ]]; then
+    BASE="${BASE} -size +${GT}c"
+fi
+if [[ ! -z $LT ]]; then
+    BASE="${BASE} -size -${LT}c"
+fi
+
+CMD="$BASE -print"
+
+#CMD="$BASE -iname \"*${string}*\""
+#eval $CMD
+#eval "$BASE -print" | xargs grep -l $string
+#exit $?
+
+if [[ ! -d $root ]]; then
+    printf "ERROR: root is not a directory, given \"%s\"\n\n" "$root" >&2
+    usage
+fi
+
+IFSbackup=IFS
+IFS=$'\n' 
+
+for file in $(eval $CMD); do
+     filename=$(basename $file)
+
+    if [ ! -z $string ]; then
+        if [ -z "${filename##*$string*}" ] || grep -q $string $file; then
+            echo $file
+        fi
+    else
+        echo $file
+    fi
+done
+
+IFS=$IFSbackup
+
+exit $?
