@@ -46,7 +46,14 @@ else
     string=""
 fi
 
+
 ##
+
+
+if [[ ! -d $root ]]; then
+    printf "ERROR: root is not a directory, given \"%s\"\n\n" "$root" >&2
+    usage
+fi
 
 BASE="find -L ${root} -type f"
 
@@ -57,33 +64,22 @@ if [[ ! -z $LT ]]; then
     BASE="${BASE} -size -${LT}c"
 fi
 
-CMD="$BASE -print"
+CMD="$BASE -print0"
 
-#CMD="$BASE -iname \"*${string}*\""
-#eval $CMD
-#eval "$BASE -print" | xargs grep -l $string
-#exit $?
+COUNT=0
 
-if [[ ! -d $root ]]; then
-    printf "ERROR: root is not a directory, given \"%s\"\n\n" "$root" >&2
-    usage
-fi
+$CMD |
+    {
+        while IFS= read -r -d $'\0' file; do
+            if [ ! -z $string ]; then
+                if [ -z "${filename##*$string*}" ] || grep -q $string $file; then
+                    echo $file
+                fi
+            else
+                echo $file
+            fi
+        done
+    }
 
-IFSbackup=IFS
-IFS=$'\n' 
-
-for file in $(eval $CMD); do
-     filename=$(basename $file)
-
-    if [ ! -z $string ]; then
-        if [ -z "${filename##*$string*}" ] || grep -q $string $file; then
-            echo $file
-        fi
-    else
-        echo $file
-    fi
-done
-
-IFS=$IFSbackup
 
 exit $?
