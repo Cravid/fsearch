@@ -1,7 +1,7 @@
 # fsearch
 CLI tool to search for files by specific search terms and filters.
 
-Requires installation of `Cravid/dehumanise`.
+Depeds on [Cravid/dehumanise](https://github.com/Cravid/dehumanise) and [Cravid/lower](https://github.com/Cravid/lower).
 
 Example:
 
