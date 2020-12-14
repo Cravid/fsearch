@@ -10,6 +10,7 @@ DESCRIPTION:
     -gt		Same as --gt
     --lt	Search for any file with size lower than the specified number
     -lt		Same as -lt
+    -c          Case sensitive mode, do not ignore case by default.
 
 PRIMARIES:
     root	Directory root for search
@@ -22,6 +23,7 @@ usage() {
 
 GT=
 LT=
+CASE=0
 
 for option in "$@"
 do
@@ -31,6 +33,7 @@ do
         -gt|--gt) GT=$(dehumanise $2); shift; shift;;
         -lt=*|--lt=*) LT=$(dehumanise "${option#*=}"); shift;;
         -lt|--lt) LT=$(dehumanise $2); shift; shift;;
+        -c) CASE=1; shift;;
         -*|--*|\?) printf "illegal option: %s\n\n" "$option" >&2; usage;;
     esac
 done
@@ -66,11 +69,16 @@ fi
 
 CMD="$BASE -print0"
 
-COUNT=0
-
 $CMD |
     {
         while IFS= read -r -d $'\0' file; do
+            filename=$(basename $file)
+
+            if [ $CASE = 0 ]; then
+                filename=`lower $filename`
+                string=`lower $string`
+            fi
+
             if [ ! -z $string ]; then
                 if [ -z "${filename##*$string*}" ] || grep -q $string $file; then
                     echo $file
@@ -80,6 +88,5 @@ $CMD |
             fi
         done
     }
-
 
 exit $?
