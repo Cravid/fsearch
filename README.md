@@ -5,7 +5,8 @@ Requires installation of `Cravid/dehumanise`.
 
 Example:
 
-```% fsearch
+```
+% fsearch
 ./LICENSE
 ./fsearch
 ./README.md
