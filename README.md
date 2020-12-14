@@ -63,6 +63,6 @@ Example:
 ./.git/hooks/update.sample
 ```
 ```
-% bash fsearch . rEadMe
+% fsearch . rEadMe
 ./README.md
 ```
